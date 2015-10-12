@@ -27,4 +27,5 @@ On the links above you'll find the necessary documentation to install each one o
 ```$ python database_setup.py```
 ```$ python db_feed.py```
 ```$ python application.py```
-6. Open web browser and navigate to this url [http://localhost:8000/] (http://localhost:8000/)
+6. Open web browser and navigate to this URL [http://localhost:8000/] (http://localhost:8000/)
+7. Enjoy!!!
