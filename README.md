@@ -17,7 +17,7 @@ On the links above you'll find the necessary documentation to install each one o
 
 ## Installation
 
-1. [Download the latest version](**repo here**).
+1. [Download the latest version](https://github.com/jlulloav/catalog-app/archive/master.zip).
 2. From the vagrant folder, you can run this command to start the virtual machine:
 ```$ vagrant up```
 3. Run this command to go inside the virtual machine:
