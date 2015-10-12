@@ -23,8 +23,8 @@ On the links above you'll find the necessary documentation to install each one o
 3. Run this command to go inside the virtual machine:
 ```$ vagrant ssh```
 5. Run these commands to start the application:
-```$ python /vagrant/catalog/database_setup.py```
-```$ python /vagrant/catalog/db_feed.py```
 ```$ cd /vagrant/catalog/```
+```$ python database_setup.py```
+```$ python db_feed.py```
 ```$ python application.py```
-6. Open web browser and open this url [http://localhost:8000/] (http://localhost:8000/)
+6. Open web browser and navigate to this url [http://localhost:8000/] (http://localhost:8000/)
