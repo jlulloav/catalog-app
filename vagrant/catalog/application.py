@@ -324,8 +324,6 @@ def editCategory(category_name):
     editedCategory = session.query(
         Category).filter_by(name=category_name).one()
 
-    # if editedCategory.user_id != login_session['user_id']:
-    #     return "<script>function myFunction() {alert('You are not authorized to edit this restaurant. Please create your own restaurant in order to edit.');}</script><body onload='myFunction()''>"
     if request.method == 'POST':
         category_name = request.form['name']
 
@@ -353,8 +351,6 @@ def deleteCategory(category_name):
     categoryToDelete = session.query(
         Category).filter_by(name=category_name).one()
 
-    # if categoryToDelete.user_id != login_session['user_id']:
-    #     return "<script>function myFunction() {alert('You are not authorized to delete this restaurant. Please create your own restaurant in order to delete.');}</script><body onload='myFunction()''>"
     if request.method == 'POST':
         session.delete(categoryToDelete)
         flash('%s Successfully Deleted' % categoryToDelete.name)
@@ -394,8 +390,7 @@ def newItem(category_name):
     if 'username' not in login_session:
         return redirect('/login')
     category = session.query(Category).filter_by(name=category_name).one()
-    # if 'user_id' in login_session and login_session['user_id'] != category.user_id:
-    # return "<script>function myFunction() {alert('You are not authorized to add menu items to this restaurant. Please create your own restaurant in order to add items.');}</script><body onload='myFunction()''>"
+
     if request.method == 'POST':
         item_title = request.form['title']
 
@@ -426,8 +421,7 @@ def editItem(category_name, item_title):
     categories = session.query(Category).order_by(asc(Category.name))
     category = session.query(Category).filter_by(name=category_name).one()
     editedItem = session.query(Item).filter_by(title=item_title, category_id=category.id).one()
-    # if login_session['user_id'] != editedItem.user_id:
-    #     return "<script>function myFunction() {alert('You are not authorized to edit menu items to this restaurant. Please create your own restaurant in order to edit items.');}</script><body onload='myFunction()''>"
+
     if request.method == 'POST':
         item_title = request.form['title']
 
@@ -459,8 +453,7 @@ def deleteItem(category_name, item_title):
         return redirect('/login')
     category = session.query(Category).filter_by(name=category_name).one()
     itemToDelete = session.query(Item).filter_by(title=item_title, category_id=category.id).one()
-    # if login_session['user_id'] != itemToDelete.user_id:
-    #     return "<script>function myFunction() {alert('You are not authorized to delete menu items to this restaurant. Please create your own restaurant in order to delete items.');}</script><body onload='myFunction()''>"
+
     if request.method == 'POST':
         session.delete(itemToDelete)
         session.commit()
