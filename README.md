@@ -4,8 +4,8 @@ Catalog App keeps your items well organized.
 
 ## Table of contents
 
-- [Installation](#installation)
 - [Dependencies](#dependencies)
+- [Installation](#installation)
 
 ## Dependencies
 As a first step, make sure you have the following dependencies installed:
