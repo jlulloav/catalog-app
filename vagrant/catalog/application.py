@@ -1,4 +1,5 @@
-from flask import Flask, render_template, request, redirect, jsonify, url_for, flash
+from flask import Flask, render_template, request, redirect, jsonify, url_for, \
+    flash
 from sqlalchemy import create_engine, asc, func
 from sqlalchemy.orm import sessionmaker
 from database_setup import Base, Category, Item, User
@@ -49,8 +50,10 @@ def fbconnect():
         'web']['app_id']
     app_secret = json.loads(
         open('fb_client_secrets.json', 'r').read())['web']['app_secret']
-    url = 'https://graph.facebook.com/oauth/access_token?grant_type=fb_exchange_token&client_id=%s&client_secret=%s&fb_exchange_token=%s' % (
-        app_id, app_secret, access_token)
+    url = 'https://graph.facebook.com/' \
+          'oauth/access_token?grant_type=fb_exchange_token&client_id=%s' \
+          '&client_secret=%s&fb_exchange_token=%s' \
+          % (app_id, app_secret, access_token)
     h = httplib2.Http()
     result = h.request(url, 'GET')[1]
 
@@ -70,12 +73,15 @@ def fbconnect():
     login_session['email'] = data["email"]
     login_session['facebook_id'] = data["id"]
 
-    # The token must be stored in the login_session in order to properly logout, let's strip out the information before the equals sign in our token
+    # The token must be stored in the login_session in order
+    # to properly logout, let's strip out the information
+    # before the equals sign in our token
     stored_token = token.split("=")[1]
     login_session['access_token'] = stored_token
 
     # Get user picture
-    url = 'https://graph.facebook.com/v2.4/me/picture?%s&redirect=0&height=200&width=200' % token
+    url = 'https://graph.facebook.com/v2.4/me/' \
+          'picture?%s&redirect=0&height=200&width=200' % token
     h = httplib2.Http()
     result = h.request(url, 'GET')[1]
     data = json.loads(result)
@@ -95,7 +101,8 @@ def fbconnect():
     output += '!</h1>'
     output += '<img src="'
     output += login_session['picture']
-    output += ' " style = "width: 300px; height: 300px;border-radius: 150px;-webkit-border-radius: 150px;-moz-border-radius: 150px;"> '
+    output += ' " style = "width: 300px; height: 300px;border-radius: 150px;' \
+              '-webkit-border-radius: 150px;-moz-border-radius: 150px;"> '
 
     flash("Now logged in as %s" % login_session['username'])
     return output
@@ -106,7 +113,8 @@ def fbdisconnect():
     facebook_id = login_session['facebook_id']
     # The access token must me included to successfully logout
     access_token = login_session['access_token']
-    url = 'https://graph.facebook.com/%s/permissions?access_token=%s' % (facebook_id, access_token)
+    url = 'https://graph.facebook.com/%s/permissions?access_token=%s' % (
+        facebook_id, access_token)
     h = httplib2.Http()
     result = h.request(url, 'DELETE')[1]
     return "you have been logged out"
@@ -163,8 +171,9 @@ def gconnect():
     stored_credentials = login_session.get('credentials')
     stored_gplus_id = login_session.get('gplus_id')
     if stored_credentials is not None and gplus_id == stored_gplus_id:
-        response = make_response(json.dumps('Current user is already connected.'),
-                                 200)
+        response = make_response(
+            json.dumps('Current user is already connected.'),
+            200)
         response.headers['Content-Type'] = 'application/json'
         return response
 
@@ -197,7 +206,8 @@ def gconnect():
     output += '!</h1>'
     output += '<img src="'
     output += login_session['picture']
-    output += ' " style = "width: 300px; height: 300px;border-radius: 150px;-webkit-border-radius: 150px;-moz-border-radius: 150px;"> '
+    output += ' " style = "width: 300px; height: 300px;border-radius: ' \
+              '150px;-webkit-border-radius: 150px;-moz-border-radius: 150px;">'
     flash("You are now logged in as %s" % login_session['username'])
     print "done!"
     return output
@@ -240,8 +250,8 @@ def getUserInfo(user_id):
 
 
 def isCreatorLogged(creator_id):
-    return 'username' in login_session and 'user_id' in login_session and creator_id == login_session[
-        'user_id']
+    return 'username' in login_session and 'user_id' in login_session \
+           and creator_id == login_session['user_id']
 
 
 def getUserID(email):
@@ -279,7 +289,8 @@ def categoriesJSON():
 def showCategories():
     categories = session.query(Category).order_by(asc(Category.name))
     user_id = getLoggedUserId()
-    return render_template('categories.html', categories=categories, user_id=user_id)
+    return render_template('categories.html', categories=categories,
+                           user_id=user_id)
 
 
 def getLoggedUserId():
@@ -298,7 +309,8 @@ def newCategory():
         category_name = request.form['name']
 
         if category_name:
-            categories = session.query(Category).filter(func.lower(Category.name) == func.lower(category_name)).all()
+            categories = session.query(Category).filter(
+                func.lower(Category.name) == func.lower(category_name)).all()
 
             if categories == []:
                 newCategory = Category(
@@ -324,14 +336,23 @@ def editCategory(category_name):
     editedCategory = session.query(
         Category).filter_by(name=category_name).one()
 
+    if editedCategory.user_id != login_session['user_id']:
+        return render_template('notAllowed.html',
+                               message='You are not authorized to edit '
+                                       'this category. Please create your '
+                                       'own category in order to edit.')
+
     if request.method == 'POST':
-        category_name = request.form['name']
+        new_category_name = request.form['name']
 
-        if category_name:
-            categories = session.query(Category).filter(func.lower(Category.name) == func.lower(category_name)).all()
+        if new_category_name:
+            categories = session.query(Category).filter(
+                func.lower(Category.name) == func.lower(
+                    new_category_name)).all()
 
-            if categories == []:
-                editedCategory.name = category_name
+            if categories == [] or new_category_name == category_name:
+                editedCategory.name = new_category_name
+                session.commit()
                 flash('Category Successfully Edited %s' % editedCategory.name)
                 return redirect(url_for('showCategories'))
             else:
@@ -339,7 +360,8 @@ def editCategory(category_name):
         else:
             flash('Category name is required.')
 
-    return render_template('editCategory.html', category_name=editedCategory.name)
+    return render_template('editCategory.html',
+                           category_name=editedCategory.name)
 
 
 # Delete a category
@@ -351,13 +373,20 @@ def deleteCategory(category_name):
     categoryToDelete = session.query(
         Category).filter_by(name=category_name).one()
 
+    if categoryToDelete.user_id != login_session['user_id']:
+        return render_template('notAllowed.html',
+                               message='You are not authorized to delete '
+                                       'this category. Please create your '
+                                       'own category in order to delete.')
+
     if request.method == 'POST':
         session.delete(categoryToDelete)
         flash('%s Successfully Deleted' % categoryToDelete.name)
         session.commit()
         return redirect(url_for('showCategories'))
     else:
-        return render_template('deleteCategory.html', category_name=categoryToDelete.name)
+        return render_template('deleteCategory.html',
+                               category_name=categoryToDelete.name)
 
 
 # Show item
@@ -368,7 +397,8 @@ def showItemDetail(category_name, item_title):
     item = session.query(Item).filter_by(
         title=item_title).one()
     is_option_visible = isCreatorLogged(creator.id)
-    return render_template('itemDetail.html', item=item, category_name=category.name,
+    return render_template('itemDetail.html', item=item,
+                           category_name=category.name,
                            is_option_visible=is_option_visible)
 
 
@@ -381,7 +411,8 @@ def showItems(category_name):
     items = session.query(Item).filter_by(
         category_id=category.id).all()
     is_option_visible = isCreatorLogged(creator.id)
-    return render_template('items.html', items=items, category=category, is_option_visible=is_option_visible)
+    return render_template('items.html', items=items, category=category,
+                           is_option_visible=is_option_visible)
 
 
 # Create a new item
@@ -396,15 +427,19 @@ def newItem(category_name):
 
         if item_title:
             items = session.query(Item).filter(
-                func.lower(Item.title) == func.lower(item_title) and Item.category_id == category.id).all()
+                func.lower(Item.title) == func.lower(
+                    item_title) and Item.category_id == category.id).all()
 
             if items == []:
-                newItem = Item(title=item_title, description=request.form['description'],
-                               category_id=category.id, user_id=category.user_id)
+                newItem = Item(title=item_title,
+                               description=request.form['description'],
+                               category_id=category.id,
+                               user_id=category.user_id)
                 session.add(newItem)
                 session.commit()
                 flash('New %s Item Successfully Created' % (newItem.title))
-                return redirect(url_for('showItems', category_name=category.name))
+                return redirect(
+                    url_for('showItems', category_name=category.name))
             else:
                 flash('Item %s already exist!' % item_title)
         else:
@@ -414,45 +449,64 @@ def newItem(category_name):
 
 
 # Edit an item
-@app.route('/catalog/<string:category_name>/<string:item_title>/edit/', methods=['GET', 'POST'])
+@app.route('/catalog/<string:category_name>/<string:item_title>/edit/',
+           methods=['GET', 'POST'])
 def editItem(category_name, item_title):
     if 'username' not in login_session:
         return redirect('/login')
     categories = session.query(Category).order_by(asc(Category.name))
     category = session.query(Category).filter_by(name=category_name).one()
-    editedItem = session.query(Item).filter_by(title=item_title, category_id=category.id).one()
+    editedItem = session.query(Item).filter_by(title=item_title,
+                                               category_id=category.id).one()
+
+    if editedItem.user_id != login_session['user_id']:
+        return render_template('notAllowed.html',
+                               message='You are not authorized to edit '
+                                       'this item. Please create your own '
+                                       'item in order to edit.')
 
     if request.method == 'POST':
-        item_title = request.form['title']
+        new_item_title = request.form['title']
 
         if item_title:
             items = session.query(Item).filter(
-                func.lower(Item.title) == func.lower(item_title) and Item.category_id == category.id).all()
+                func.lower(Item.title) == func.lower(
+                    new_item_title) and Item.category_id == category.id).all()
 
-            if items == []:
-                editedItem.title = request.form['title']
+            if items == [] or new_item_title == item_title:
+                editedItem.title = new_item_title
                 editedItem.description = request.form['description']
                 editedItem.category_id = request.form['category']
                 session.add(editedItem)
                 session.commit()
                 flash('Item Successfully Edited')
-                return redirect(url_for('showItems', category_name=category_name))
+                return redirect(
+                    url_for('showItems', category_name=category_name))
             else:
                 flash('Item %s already exist!' % item_title)
         else:
             flash('Item title is required.')
 
-    return render_template('editItem.html', category_name=category_name, item_title=editedItem.title,
+    return render_template('editItem.html', category_name=category_name,
+                           item_title=editedItem.title,
                            item=editedItem, categories=categories)
 
 
 # Delete an item
-@app.route('/catalog/<string:category_name>/<string:item_title>/delete/', methods=['GET', 'POST'])
+@app.route('/catalog/<string:category_name>/<string:item_title>/delete/',
+           methods=['GET', 'POST'])
 def deleteItem(category_name, item_title):
     if 'username' not in login_session:
         return redirect('/login')
     category = session.query(Category).filter_by(name=category_name).one()
-    itemToDelete = session.query(Item).filter_by(title=item_title, category_id=category.id).one()
+    itemToDelete = session.query(Item).filter_by(title=item_title,
+                                                 category_id=category.id).one()
+
+    if itemToDelete.user_id != login_session['user_id']:
+        return render_template('notAllowed.html',
+                               message='You are not authorized to delete'
+                                       ' this item. Please create your '
+                                       'own item in order to delete.')
 
     if request.method == 'POST':
         session.delete(itemToDelete)
@@ -460,7 +514,8 @@ def deleteItem(category_name, item_title):
         flash('Item Successfully Deleted')
         return redirect(url_for('showItems', category_name=category_name))
     else:
-        return render_template('deleteItem.html', category_name=category_name, item_title=itemToDelete.title)
+        return render_template('deleteItem.html', category_name=category_name,
+                               item_title=itemToDelete.title)
 
 
 # Disconnect based on provider
